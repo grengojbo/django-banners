@@ -3,11 +3,11 @@
 <h2>Кампании</h2>
 
 {% for campaign in campaigns %}
-   {{ campaign.name }}<br/>
+    {{ campaign.name }}<br/>
 {% endfor %}
 
 <h2>Баннеры</h2>
 
 {% for banner in banners %}
-   <a href="{% url ibanners.banner banner_id=banner.id %}">{{ banner.name }}</a><br/>
+    <a href="{% url ibanners.banner banner_id=banner.id %}">{{ banner.name }}</a><br/>
 {% endfor %}

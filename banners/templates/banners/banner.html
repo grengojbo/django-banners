@@ -1,0 +1,26 @@
+<h1>{{ banner.name }}</h1>
+
+{% trans 'Дата начала' %}:
+{% if banner.begin_date %}{{ banner.begin_date|date:"d.m.Y" }}{% else %}{% trans 'не задана' %}{% endif %}<br/>
+{% trans 'Дата окончания' %}:
+{% if banner.end_date %}{{ banner.end_date|date:"d.m.Y" }}{% else %}{% trans 'не задана' %}{% endif %}<br/>
+{% trans 'Статус' %}:
+
+<table>
+    <tr>
+        <td>{% trans 'Дата' %}</td>
+        <td>{% trans 'Показов' %}</td>
+        <td>{% trans 'Кликов' %}</td>
+        <td>{% trans 'CTR' %}</td>
+    </tr>
+    {% for stat in stats %}
+        <tr>
+            <td>{{ stat.date }}</td>
+            <td>{{ stat.shows }}</td>
+            <td>{{ stat.clicks }}</td>
+            <td>{{ stat.ctr }}</td>
+            <td></td>
+            <td></td>
+        </tr>
+    {% endfor %}
+</table>

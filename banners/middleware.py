@@ -25,7 +25,7 @@ class BannersMiddleware(object):
         request.banners_placement_shows = []
 
     def process_response(self, request, response):
-        # На больших нагрузках происходят факапы
-        #if response.status_code == 200 and request.banners_placement_shows:
-            #Placement.objects.filter(id__in=request.banners_placement_shows).update(shows=F("shows") + 1)
+    # На больших нагрузках происходят факапы
+    #if response.status_code == 200 and request.banners_placement_shows:
+    #Placement.objects.filter(id__in=request.banners_placement_shows).update(shows=F("shows") + 1)
         return response
