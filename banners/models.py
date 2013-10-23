@@ -15,6 +15,9 @@ try:
 except ImportError:
     from md5 import md5
 from time import time
+import logging
+
+logger = logging.getLogger(__name__)
 
 BANNER_CODE = (
     (0, _(u'JavaScript')),
@@ -67,6 +70,7 @@ class BannerSize(models.Model):
                              help_text=_(u"После значения указывайте единицы, например 100px или 30%"))
     height = models.CharField(_(u"Высота"), blank=True, null=False, default="", max_length=100,
                               help_text=_(u"После значения указывайте единицы, например 100px или 30%"))
+    #description = models.TextField(_('Description'), blank=True, null=True, help_text=_(u'Краткое описание формата'))
 
     class Meta(object):
         verbose_name = _(u"Размер баннера")
@@ -162,6 +166,8 @@ class Placement(models.Model):
     priority = models.PositiveSmallIntegerField(verbose_name=u"Приоритет", choices=PRIORITY, default=0)
     is_active = models.BooleanField(_(u'Is active'), default=True)
     created_at = models.DateTimeField(_(u'Create at'), auto_now_add=True, blank=True, null=True)
+    unique_mac = models.BooleanField(_(u'Уникальный MAC адресс'), default=False, help_text=_(u'Считать только пользователей с уникальным МАС адресом'))
+    unique_session = models.BooleanField(_(u'Уникальный пользователь'), default=True, help_text=_(u'Считать  уникальных пользователей по сессии'))
 
     class Meta(object):
         verbose_name = _(u"размещение")
@@ -202,7 +208,7 @@ class Placement(models.Model):
 class Banner(models.Model):
     campaign = models.ForeignKey(Placement, verbose_name=u"Кампания", blank=True, null=True, related_name='banners')
     #zones = models.ManyToManyField(Zone, verbose_name=u"Связанные зоны")
-    name = models.CharField(_(u"название"), max_length=255, null=False, blank=False)
+    name = models.CharField(_(u"название"), max_length=255, null=False, blank=False, unique=True)
     banner_type = models.CharField(_(u"Тип баннера"), max_length=1, choices=BANNER_TYPES)
     # Внешний URL куда ведет баннер
     foreign_url = models.CharField(max_length=200, blank=True, verbose_name=_(u"URL перехода"), default="")
@@ -245,33 +251,98 @@ class Banner(models.Model):
     def height(self):
         return self.size.height
 
-    def click(self, request):
+    def click(self, request, zone_id, ungine=True):
         click = {
             'banner': self,
+            'zone_id': zone_id,
             'campaign': self.campaign,
             'ip': request.META.get('REMOTE_ADDR'),
             'user_agent': request.META.get('HTTP_USER_AGENT'),
             'referrer': request.META.get('HTTP_REFERER'),
         }
 
-        if request.user.is_authenticated():
-            click['user'] = request.user
+        if request.session:
+            click['ses'] = request.session.session_key
+            if request.session['user_mac']:
+                click['user_mac'] = request.session['user_mac']
 
-        return BannerClick.objects.create(**click)
+        logger.debug('Create Banner Click: {0}'.format(click))
+        res = BannerClick.objects.create(**click)
+
+        Placement.objects.filter(pk=res.campaign_id).update(clicks=models.F('clicks') + 1)
+        return res
+
+    def show(self, request, zone_id, ungine=True):
+        show = {
+            'banner': self,
+            'zone_id': zone_id,
+            'campaign': self.campaign,
+            'ip': request.META.get('REMOTE_ADDR'),
+            'user_agent': request.META.get('HTTP_USER_AGENT'),
+            'referrer': request.META.get('HTTP_REFERER'),
+        }
+
+        if request.session:
+            show['ses'] = request.session.session_key
+            if request.session['user_mac']:
+                show['user_mac'] = request.session['user_mac']
+
+        #if request.user.is_authenticated():
+        #    click['user'] = request.user
+        logger.debug('Create Banner Views: {0}'.format(show))
+        res = BannerShow.objects.create(**show)
+        if ungine:
+            Placement.objects.filter(pk=res.campaign_id).update(shows=models.F('shows') + 1)
+        else:
+            Placement.objects.filter(pk=res.campaign_id).update(shows=models.F('shows') + 1)
+        return res
 
 
 class BannerClick(models.Model):
     banner = models.ForeignKey(Banner, related_name="clicks")
-    user = models.ForeignKey(User, null=True, blank=True, related_name="banner_clicks")
-    #ses =
+    zone = models.ForeignKey(Zone, blank=True, null=True, related_name="banner_clicks")
+    #user = models.ForeignKey(User, null=True, blank=True, related_name="banner_clicks")
+    ses = models.CharField(_(u'Сессия'), blank=True, null=True, max_length=32)
     user_mac = models.CharField(_(u'MAC адресс'), blank=True, null=True, max_length=17)
     campaign = models.ForeignKey(Placement, verbose_name=u"Кампания", blank=True, null=True,
                                  related_name='banner_clicks')
-    datetime = models.DateTimeField("Clicked at", auto_now_add=True)
+    datetime = models.DateTimeField(u"Clicked at", auto_now_add=True)
+    ip = models.IPAddressField(null=True, blank=True)
+    user_agent = models.TextField(validators=[MaxLengthValidator(1000)], null=True, blank=True)
+    referrer = models.URLField(null=True, blank=True)
+    #foreign_url = models.CharField(max_length=200, blank=True, verbose_name=_(u"URL перехода"), default="")
+
+    class Meta(object):
+        verbose_name = _(u"Переходы по баннеру")
+        verbose_name_plural = _(u"Переходы по баннерам")
+
+
+class BannerShow(models.Model):
+    banner = models.ForeignKey(Banner)
+    #user = models.ForeignKey(User, null=True, blank=True, related_name="banner_show")
+    zone = models.ForeignKey(Zone, blank=True, null=True)
+    ses = models.CharField(_(u'Сессия'), blank=True, null=True, max_length=32)
+    user_mac = models.CharField(_(u'MAC адресс'), blank=True, null=True, max_length=17)
+    campaign = models.ForeignKey(Placement, verbose_name=u"Кампания", blank=True, null=True)
+    datetime = models.DateTimeField(_(u"Show at"), auto_now_add=True)
     ip = models.IPAddressField(null=True, blank=True)
     user_agent = models.TextField(validators=[MaxLengthValidator(1000)], null=True, blank=True)
     referrer = models.URLField(null=True, blank=True)
 
+    class Meta(object):
+        verbose_name = _(u"Показы баннера")
+        verbose_name_plural = _(u"Показы баннеров")
+        #ordering = ["name"]
+
+    def client(self):
+        if self.user_mac is not None:
+            return u'{0}'.format(self.user_mac)
+        elif self.ses is not None:
+            return u'{0}'.format(self.ses)
+        return u'no Name'
+
+    client.short_description = _(u'Размеры')
+    #client.allow_tags = True
 
     #class Client(models.Model):
     #    name = models.CharField(max_length=100, verbose_name=u"Имя")

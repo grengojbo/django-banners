@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 from django.contrib import admin
-from .models import Zone, Banner, Placement, BannerSize
+from .models import Zone, Banner, Placement, BannerSize, BannerShow, BannerClick
 from .utils import clear_banners_cache
 from django.conf import settings
 from django.utils.translation import ugettext_lazy as _
@@ -102,7 +102,42 @@ class PlacementAdmin(admin.ModelAdmin):
         clear_banners_cache()
         obj.save()
 
+
+class BannerShowAdmin(admin.ModelAdmin):
+    readonly_fields = ('ses', 'user_mac', 'campaign', 'banner', 'zone', 'ip', 'referrer')
+    #fieldsets = (
+    #    (None, {
+    #        'classes': ('wide',),
+    #        'fields': ('campaign', 'banner', 'zone', 'datetime', 'ip', 'referrer', 'user_agent')
+    #    }),
+    #    (u"Период размещения", {
+    #        'classes': ('wide',),
+    #        'fields': ('begin_date', 'end_date')
+    #    })
+    #)
+    list_display = ('client', 'ip', 'campaign', 'banner', 'zone', 'datetime')
+    list_per_page = 30
+
+
+class BannerClickAdmin(admin.ModelAdmin):
+    readonly_fields = ('ses', 'user_mac', 'campaign', 'banner', 'zone', 'ip', 'referrer')
+    #fieldsets = (
+    #    (None, {
+    #        'classes': ('wide',),
+    #        'fields': ('campaign', 'banner', 'zone', 'datetime', 'ip', 'referrer', 'user_agent')
+    #    }),
+    #    (u"Период размещения", {
+    #        'classes': ('wide',),
+    #        'fields': ('begin_date', 'end_date')
+    #    })
+    #)
+    list_display = ('ip', 'campaign', 'banner', 'zone', 'datetime')
+    list_per_page = 30
+
+
+admin.site.register(BannerShow, BannerShowAdmin)
 admin.site.register(Banner, BannerAdmin)
 admin.site.register(Zone, ZoneAdmin)
 admin.site.register(Placement, PlacementAdmin)
 admin.site.register(BannerSize, BannerSizeAdmin)
+admin.site.register(BannerClick, BannerClickAdmin)
