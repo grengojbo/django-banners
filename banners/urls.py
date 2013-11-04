@@ -8,6 +8,6 @@ urlpatterns = patterns('banners.views',
                            view='shows', name='shows'),
                        url(regex=r'^click/(?P<banner_id>\d+)/(?P<zone_id>\d+)/$',
                            view='clicks', name='clicks'),
-                       url(regex=r'^code/(?P<zone_id>\d+)/$',  view='code', name='code'),
+                       url(regex=r'^code/(?P<zone_id>\d+)/(?P<btype>ip|name)/$',  view='code', name='code'),
                        url(regex=r'^zones/$',  view='code', name='zones'),
 )

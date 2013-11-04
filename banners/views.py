@@ -94,20 +94,40 @@ def shows(request, banner_id, zone_id, btype, user_mac=None):
     return HttpResponseRedirect(src_url)
 
 
-def code(request, zone_id=1):
+def code(request, zone_id, btype='name'):
     '''http://ads.sky5.com.ua/openx/www/delivery/spc.php?
     zones=wifi-ad%3D15%7C&nz=1&source=&r=14698272&charset=UTF-8
     &loc=http%3A//localhost%3A9000/
+    http://127.0.0.1:8000/b/code/1/ip/
     '''
-    logger.debug('loc: {0}'.format(request.GET['loc']))
-    template = get_template("banners/zones.js")
-    context = Context({
-        "banner_code": gen_banner_code(request, zone_id, var=False),
-        "MEDIA_URL": bset.settings.MEDIA_URL
-        #"html_after_banner": zone.html_after_banner,
-        #"html_pre_banner": zone.html_pre_banner
-    })
-    return HttpResponse(template.render(context), mimetype="application/x-javascript")
+    vquery = ''
+    if 'loc' in request.GET:
+        logger.debug('loc: {0}'.format(request.GET['loc']))
+        #vquery += 'loc={0}&'.format(request.GET['loc'])
+    if 'charset' in request.GET:
+        logger.debug('charset: {0}'.format(request.GET['charset']))
+    if 'r' in request.GET:
+        logger.debug('r: {0}'.format(request.GET['r']))
+    if 'source' in request.GET:
+        logger.debug('source: {0}'.format(request.GET['source']))
+    if 'nz' in request.GET:
+        logger.debug('nz: {0}'.format(request.GET['nz']))
+    #if 'loc' in request.GET:
+    #    logger.debug('loc: {0}'.format(request.GET['loc']))
+    if vquery.__len__() > 3:
+        vquery += 'v=1'
+    #cache.get()
+    if request.GET:
+        logger.debug("request.GET.urlencode: {0}".format(request.GET.urlencode))
+        vquery = "?{0}".format(request.META['QUERY_STRING'])
+    res = gen_banner_code(request, zone_id, var=False)
+    if btype == 'ip':
+        go = bset.BANNER_IP
+    else:
+        go = bset.BANNER_URL
+    #return HttpResponse(template.render(context), mimetype="application/x-javascript")
+    return HttpResponse(res.format('http://', go, vquery), mimetype="application/x-javascript")
+
 
 def zones(request, zone_id):
     template = get_template("banners/zones.html")
@@ -139,8 +159,9 @@ def normalize(lst):
     return new_lst
 
 
-def gen_code(b, plc, zone):
+def gen_code(b, plc, zone, go=None, zone_el='wifi-ad'):
     code = u""
+    logger.debug("Zone type: {0}".format(zone))
     img_url = cache.get("hbanner:{0}:img".format(b.id))
     if not img_url:
         img_url = b.img_file.url if b.img_file else ""
@@ -150,8 +171,26 @@ def gen_code(b, plc, zone):
         swf_url = b.swf_file.url if b.swf_file else ""
         cache.set("hbanner:swf:{0}".format(b.id), swf_url, bset.BANNER_CACHE_TIME)
     logger.debug("img: {1} url: {0}".format(img_url, b.img_file))
-    # Flash-баннер
-    if b.banner_type == 'f':
+    if int(zone['code_view']) == 2:
+        # показывать баннер для WiFi Cisco
+        banner_href = reverse("banners:placement", kwargs={"placement_id": plc["id"], 'zone_id': zone["id"]})
+        src_url = u'{0}{1}'.format('', reverse('banners:shows', kwargs={'banner_id': b.id, 'zone_id': zone["id"],
+                                                                        'btype': 'img'}))
+        template = get_template("banners/zones.js")
+        context = Context({
+            'banner_href': banner_href,
+            "banner_width": b.width,
+            "banner_height": b.height,
+            'go': go,
+            'zone_el': zone_el,
+            "banner_code": src_url,
+            "MEDIA_URL": bset.settings.MEDIA_URL,
+            "html_after_banner": zone["html_after_banner"],
+            "html_pre_banner": zone["html_pre_banner"]
+        })
+        return template.render(context)
+    elif b.banner_type == 'f':
+        # Flash-баннер
         banner_href = reverse("banners:placement", kwargs={"placement_id": plc["id"]})
         template = get_template("banners/gen_banner_code.html")
         context = Context({
@@ -188,18 +227,20 @@ def gen_code(b, plc, zone):
 def gen_banner_code(request, zone_id, var=False):
     pr = {1: 3, 2: 5, 3: 7, 4: 9, 5: 11, 6: 13, 7: 15, 8: 17, 9: 20}  # Распределение вероятностей
     probabilities = []
+    hbanner = u""
     #site = Site.objects.get_current()
     #banner_site_url = getattr(settings, 'BANNER_SITE_URL', 'http://%s/' % site.domain)
-
-    hbanner = u""
-    zones = getattr(request, "banners_zones", None)
-    zones_eng = getattr(request, "banners_zones_eng", None)
-
     if 'banners.clients' in request.META:
         request.META['banners.clients'] = []
 
+    # TODO: разобратся с зонами кеширование, проверка
+    #zones = getattr(request, "banners_zones", None)
+    #zones_eng = getattr(request, "banners_zones_eng", None)
+    zones = None
+    zones_eng = None
     # Поиск зоны
     zone_id = str(zones_eng[zone_id]) if (zones and zone_id in zones_eng) else str(zone_id)
+
     # Поиск по переменным
     if not var:
         var = request.GET.get('var', False)
@@ -209,10 +250,13 @@ def gen_banner_code(request, zone_id, var=False):
         if zone_id.isdigit():
             if zones and int(zone_id) in zones:
                 zone = zones[int(zone_id)]
+                logger.debug("ZONE zones: {0}".format(zone))
             else:
                 zone = Zone.objects.get(id=zone_id).__dict__
+                logger.debug("ZONE int: {0}".format(zone))
         else:
             zone = Zone.objects.get(english_name=zone_id.lower()).__dict__
+            logger.debug("ZONE string: {0}".format(zone))
         logger.debug('ADS: zoneID: {0}'.format(zone_id))
     except Exception:
         zone = None
@@ -270,13 +314,14 @@ def gen_banner_code(request, zone_id, var=False):
             request.banners_placement_shows.append(plc["id"])
 
             # Кэшируем баннер
-            hbanner = cache.get("hbanner.{0}".format(banner.id))
+            #hbanner = cache.get("hbanner.{0}".format(banner.id))
             if not hbanner:
                 #b = Banner.objects.get(pk=banner.id, is_active=True)
+                #logger.debug("ZONE: {0}".format(zone))
                 hbanner = gen_code(banner, plc, zone)
             #else:
             #    hbanner = u""
-            cache.set("hbanner.{0}".format(banner.id), hbanner, bset.BANNER_CACHE_TIME)
+            #cache.set("hbanner.{0}".format(banner.id), hbanner, bset.BANNER_CACHE_TIME)
         return hbanner
     # Если зона не найдена
     else:
