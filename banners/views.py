@@ -297,8 +297,7 @@ def gen_banner_code(request, zone_id, var=False):
             plc = placement[0]
             logger.debug(u'ADS: placement[{1}] {0}'.format(plc, plc['id']))
             try:
-                banners = Banner.objects.filter(campaign=plc['id'], is_active=True)
-                # TODO: выбор баннера по размеру
+                banners = Banner.objects.filter(campaign=plc['id'], size_id=zone['size_id'], is_active=True)
                 banner = banners[0]
                 logger.debug(u'ADS: banner[{0}] {1}'.format(banner.id, banner))
             except Exception:
