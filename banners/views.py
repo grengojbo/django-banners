@@ -31,6 +31,8 @@ def placement(request, placement_id, zone_id):
 def clicks(request, banner_id, zone_id, ses):
     user_key = None
     clien_type = None
+    if 'HTTP_X_FORWARDED_FOR' in request.META:
+        request.META['REMOTE_ADDR'] = request.META['HTTP_X_FORWARDED_FOR']
     if request.session.session_key:
         logger.debug(u'request session: {0}'.format(request.session.session_key))
         user_key = request.session.session_key
@@ -64,6 +66,8 @@ def shows(request, banner_id, zone_id, ses, user_mac=None):
     user_key = None
     clien_type = None
     btype = None
+    if 'HTTP_X_FORWARDED_FOR' in request.META:
+        request.META['REMOTE_ADDR'] = request.META['HTTP_X_FORWARDED_FOR']
     if request.session.session_key:
         logger.debug(u'request session: {0}'.format(request.session.session_key))
         user_key = request.session.session_key
@@ -132,6 +136,7 @@ def code(request, zone_id, btype='name'):
     else:
         go = bset.BANNER_URL
     #return HttpResponse(template.render(context), mimetype="application/x-javascript")
+    logger.debug("[code] request.META: {0}".format(request.META))
     return HttpResponse(res.format('http://', go, vses, vquery), mimetype="application/x-javascript")
 
 
