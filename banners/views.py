@@ -123,6 +123,7 @@ def code(request, zone_id, btype='name'):
     if vquery.__len__() > 3:
         vquery += 'v=1'
     #cache.get()
+    request.session['last_activity'] = dt.now()
     if request.session.session_key:
         logger.debug(u'CODE request session: {0}'.format(request.session.session_key))
         user_key = request.session.session_key

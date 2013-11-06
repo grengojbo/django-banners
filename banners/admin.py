@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 from django.contrib import admin
-from .models import Zone, Banner, Placement, BannerSize, BannerShow, BannerClick
+from .models import Zone, Banner, Placement, BannerSize, BannerShow, BannerClick, Resurce
 from .utils import clear_banners_cache
 from django.conf import settings
 from django.utils.translation import ugettext_lazy as _
@@ -11,18 +11,31 @@ class BannerSizeAdmin(admin.ModelAdmin):
     list_display = ("name", "get_size")
 
 
+class ResurceAdmin(admin.ModelAdmin):
+    list_display = ("name", "user", 'site', 'is_active', 'description')
+    list_per_page = 30
+
+    def formfield_for_foreignkey(self, db_field, request, **kwargs):
+        if db_field.name == 'user':
+            kwargs['initial'] = request.user.id
+            return db_field.formfield(**kwargs)
+        return super(ResurceAdmin, self).formfield_for_foreignkey(
+            db_field, request, **kwargs
+        )
+
+
 class ZoneAdmin(admin.ModelAdmin):
-    list_display = ("name", "english_name", 'author', 'size', 'is_active')
+    list_display = ("name", "english_name", 'resurces', 'size', 'is_active')
     list_per_page = 30
     prepopulated_fields = {'english_name': ('name',)}
 
-    def formfield_for_foreignkey(self, db_field, request, **kwargs):
-        if db_field.name == 'author':
-            kwargs['initial'] = request.user.id
-            return db_field.formfield(**kwargs)
-        return super(ZoneAdmin, self).formfield_for_foreignkey(
-            db_field, request, **kwargs
-        )
+    #def formfield_for_foreignkey(self, db_field, request, **kwargs):
+    #    if db_field.name == 'author':
+    #        kwargs['initial'] = request.user.id
+    #        return db_field.formfield(**kwargs)
+    #    return super(ZoneAdmin, self).formfield_for_foreignkey(
+    #        db_field, request, **kwargs
+    #    )
 
     def save_model(self, request, obj, form, change):
         clear_banners_cache()
@@ -141,3 +154,4 @@ admin.site.register(Zone, ZoneAdmin)
 admin.site.register(Placement, PlacementAdmin)
 admin.site.register(BannerSize, BannerSizeAdmin)
 admin.site.register(BannerClick, BannerClickAdmin)
+admin.site.register(Resurce, ResurceAdmin)

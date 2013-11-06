@@ -87,10 +87,28 @@ class BannerSize(models.Model):
         return self.name
 
 
+class Resurce(models.Model):
+    name = models.CharField(max_length=100, verbose_name=_(u'Название'))
+    user = models.ForeignKey(User, verbose_name=_(u'Издатель'), default=1, related_name='author')
+    contact = models.CharField(max_length=100, verbose_name=u"Контакт", blank=True, null=True)
+    description = models.CharField(max_length=255, verbose_name=u"описание", blank=True, null=True)
+    site = models.ForeignKey(Site, verbose_name=u"сайт", blank=True, null=True)
+    is_active = models.BooleanField(_(u'Is active'), default=True)
+
+    class Meta:
+        ordering = ["name", ]
+        verbose_name = _(u'Ресурс')
+        verbose_name_plural = _(u'Ресурсы')
+
+    def __unicode__(self):
+        return self.name
+
+
 class Zone(models.Model):
     # Зона на сайте где будет отображатся баннер
     name = models.CharField(_(u"название"), max_length=255, blank=False, null=False)
-    author = models.ForeignKey(User, verbose_name=_(u'Издатель'), default=1)
+    #author = models.ForeignKey(User, verbose_name=_(u'Издатель'), default=1)
+    resurces = models.ForeignKey(Resurce, verbose_name=_(u'Ресурс'), blank=True, null=True)
     #site = models.ForeignKey(Site, verbose_name=u"сайт", default=[settings.SITE_ID])
     size = models.ForeignKey(BannerSize, verbose_name=_(u'Размер'))
     english_name = models.CharField(_(u"название по-английски"), max_length=255, blank=False, null=False, unique=True,
@@ -168,6 +186,8 @@ class Placement(models.Model):
     created_at = models.DateTimeField(_(u'Create at'), auto_now_add=True, blank=True, null=True)
     unique_mac = models.BooleanField(_(u'Уникальный MAC адресс'), default=False, help_text=_(u'Считать только пользователей с уникальным МАС адресом'))
     unique_session = models.BooleanField(_(u'Уникальный пользователь'), default=True, help_text=_(u'Считать  уникальных пользователей по сессии'))
+    client = models.ForeignKey(User, verbose_name=_(u'Клиент'), default=1, related_name='client')
+    one_banner_per_page = models.BooleanField(default=True, blank=True, verbose_name=u"Показывать только один баннер этого рекламодателя на странице")
 
     class Meta(object):
         verbose_name = _(u"размещение")
@@ -311,6 +331,8 @@ class BannerClick(models.Model):
     user_agent = models.TextField(validators=[MaxLengthValidator(1000)], null=True, blank=True)
     referrer = models.URLField(null=True, blank=True)
     #foreign_url = models.CharField(max_length=200, blank=True, verbose_name=_(u"URL перехода"), default="")
+    # Статистика
+    clicks = models.PositiveIntegerField(_(u"Кликов"), blank=True, default=0)
 
     class Meta(object):
         verbose_name = _(u"Переходы по баннеру")
@@ -328,6 +350,8 @@ class BannerShow(models.Model):
     ip = models.IPAddressField(null=True, blank=True)
     user_agent = models.TextField(validators=[MaxLengthValidator(1000)], null=True, blank=True)
     referrer = models.URLField(null=True, blank=True)
+    # Статистика
+    shows = models.PositiveIntegerField(_(u"Показов"), blank=True, default=0)
 
     class Meta(object):
         verbose_name = _(u"Показы баннера")
