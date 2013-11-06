@@ -11,9 +11,19 @@ class BannerSizeAdmin(admin.ModelAdmin):
     list_display = ("name", "get_size")
 
 
+class InlineZoneAdmin(admin.TabularInline):
+    model = Zone
+    fieldsets = ((None, {'fields': ['name', 'size', 'code_view', 'is_active']}),)
+    extra = 0
+
+
 class ResurceAdmin(admin.ModelAdmin):
     list_display = ("name", "user", 'site', 'is_active', 'description')
     list_per_page = 30
+    list_filter = ('is_active',)
+    search_fields = ('name',)
+    raw_id_fields = ('user',)
+    inlines = [InlineZoneAdmin]
 
     def formfield_for_foreignkey(self, db_field, request, **kwargs):
         if db_field.name == 'user':
@@ -28,6 +38,9 @@ class ZoneAdmin(admin.ModelAdmin):
     list_display = ("name", "english_name", 'resurces', 'size', 'is_active')
     list_per_page = 30
     prepopulated_fields = {'english_name': ('name',)}
+    list_filter = ('is_active',)
+    search_fields = ('name',)
+    raw_id_fields = ('resurces',)
 
     #def formfield_for_foreignkey(self, db_field, request, **kwargs):
     #    if db_field.name == 'author':
@@ -63,6 +76,7 @@ class BannerAdmin(admin.ModelAdmin):
     )
     list_display = ("name", "banner_type", "size", 'priority', 'is_active')
     list_per_page = 30
+    list_filter = ('is_active',)
 
     def save_model(self, request, obj, form, change):
         clear_banners_cache()
@@ -100,8 +114,11 @@ class PlacementAdmin(admin.ModelAdmin):
     )
     #search_fields = ("banner__name",)
     #inlines = [InlineBannerAdmin]
-    list_display = ("author", "get_zones", "frequency", "clicks", "max_clicks", "shows", "max_shows",
+    list_display = ('name', "author", "get_zones", "frequency", "clicks", "max_clicks", "shows", "max_shows",
                     "begin_date", "end_date", "get_status", 'is_active', 'created_at')
+    list_filter = ('is_active',)
+    raw_id_fields = ('author',)
+    search_fields = ('name',)
 
     def formfield_for_foreignkey(self, db_field, request, **kwargs):
         if db_field.name == 'author':
