@@ -263,7 +263,7 @@ class Banner(models.Model):
 
         if request.session:
             click['ses'] = request.session.session_key
-            if request.session['user_mac']:
+            if 'user_mac' in request.session:
                 click['user_mac'] = request.session['user_mac']
 
         logger.debug('Create Banner Click: {0}'.format(click))
@@ -284,7 +284,7 @@ class Banner(models.Model):
 
         if request.session:
             show['ses'] = request.session.session_key
-            if request.session['user_mac']:
+            if 'user_mac' in request.session:
                 show['user_mac'] = request.session['user_mac']
 
         #if request.user.is_authenticated():
