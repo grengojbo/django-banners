@@ -9,6 +9,7 @@ from django.contrib.auth.models import User
 from django.db.models.signals import post_save, post_delete, pre_delete
 from django.dispatch import receiver
 from django.core.validators import MaxLengthValidator
+from imagestore.models import Album
 
 try:
     from hashlib import md5
@@ -94,6 +95,7 @@ class Resurce(models.Model):
     description = models.CharField(max_length=255, verbose_name=u"описание", blank=True, null=True)
     site = models.ForeignKey(Site, verbose_name=u"сайт", blank=True, null=True)
     is_active = models.BooleanField(_(u'Is active'), default=True)
+    album = models.ForeignKey(Album, verbose_name=_(u'Изображение'), blank=True, null=True, help_text=_(u'Пример размещения на сайте.'))
 
     class Meta:
         ordering = ["name", ]
@@ -119,6 +121,7 @@ class Zone(models.Model):
     code_view = models.PositiveSmallIntegerField(verbose_name=_(u"Генератор кода"), choices=BANNER_CODE, default=1,
                                                  help_text=_(u"Как генерировать код?"))
     is_active = models.BooleanField(_(u'Is active'), default=True)
+    album = models.ForeignKey(Album, verbose_name=_(u'Изображение'), blank=True, null=True, help_text=_(u'Пример размещения на сайте.'))
     #price = models.IntegerField(verbose_name=u"Цена месяца показа")
 
     class Meta(object):
@@ -316,6 +319,17 @@ class Banner(models.Model):
         else:
             Placement.objects.filter(pk=res.campaign_id).update(shows=models.F('shows') + 1)
         return res
+
+    #def admin_thumbnail(self):
+    #    try:
+    #        return '<img src="%s">' % get_thumbnail(self.image, '100x100', crop='center').url
+    #    except IOError:
+    #        return 'IOError'
+    #    except ThumbnailError, ex:
+    #        return 'ThumbnailError, %s' % ex.message
+
+    #admin_thumbnail.short_description = _('Thumbnail')
+    #admin_thumbnail.allow_tags = True
 
 
 class BannerClick(models.Model):
