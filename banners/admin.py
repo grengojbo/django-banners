@@ -55,6 +55,13 @@ class ZoneAdmin(admin.ModelAdmin):
         obj.save()
 
 
+class InlineBannerAdmin(AdminInlineImageMixin, admin.TabularInline):
+    model = Banner
+    fieldsets = ((None, {'fields': ['img_file', 'name', 'banner_type', 'foreign_url', 'size']}),)
+    #raw_id_fields = ('user', )
+    extra = 0
+
+
 class BannerAdmin(admin.ModelAdmin):
     fieldsets = (
         (None, {
@@ -74,6 +81,7 @@ class BannerAdmin(admin.ModelAdmin):
             'fields': ('var', 'priority')
         })
     )
+    inlines = [InlineBannerAdmin]
     list_display = ("name", "banner_type", "size", 'priority', 'is_active')
     list_per_page = 30
     list_filter = ('is_active',)
@@ -81,16 +89,6 @@ class BannerAdmin(admin.ModelAdmin):
     def save_model(self, request, obj, form, change):
         clear_banners_cache()
         obj.save()
-
-
-class InlineBannerAdmin(AdminInlineImageMixin, admin.TabularInline):
-    model = Banner
-    fieldsets = ((None, {'classes': ('wide',), 'fields': ['name', 'banner_type', 'foreign_url', 'size', 'priority',
-                                                          'campaign']}),
-                 (_(u"Баннер"), {'classes': ('wide',), 'fields': ['is_active', 'img_file', 'swf_file', 'var',
-                                                                  'url_target']}))
-    #raw_id_fields = ('user', )
-    extra = 0
 
 
 class PlacementAdmin(admin.ModelAdmin):
