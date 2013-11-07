@@ -290,12 +290,13 @@ class Banner(models.Model):
             'user_agent': request.META.get('HTTP_USER_AGENT'),
             'referrer': request.META.get('HTTP_REFERER'),
             'audits': audits,
+            'clicks': 1,
         }
 
         if request.session:
             click['ses'] = request.session.session_key
-            if 'user_mac' in request.session:
-                click['user_mac'] = request.session['user_mac']
+            #if 'user_mac' in request.session:
+            #    click['user_mac'] = request.session['user_mac']
 
         logger.debug('Create Banner Click: {0}'.format(click))
         res = BannerClick.objects.create(**click)
@@ -313,12 +314,13 @@ class Banner(models.Model):
             'user_agent': request.META.get('HTTP_USER_AGENT'),
             'referrer': request.META.get('HTTP_REFERER'),
             'audits': audits,
+            'shows': 1,
         }
 
         if request.session:
             show['ses'] = request.session.session_key
-            if 'user_mac' in request.session:
-                show['user_mac'] = request.session['user_mac']
+            #if 'user_mac' in request.session:
+            #    show['user_mac'] = request.session['user_mac']
 
         #if request.user.is_authenticated():
         #    click['user'] = request.user
@@ -371,7 +373,7 @@ class BannerShow(models.Model):
     campaign = models.ForeignKey(Placement, verbose_name=u"Кампания", blank=True, null=True)
     datetime = models.DateTimeField(_(u"Show at"), auto_now_add=True)
     ip = models.IPAddressField(null=True, blank=True)
-    user_agent = models.TextField(validators=[MaxLengthValidator(1000)], null=True, blank=True)
+    user_agent = models.TextField(_(u'User Gent'), validators=[MaxLengthValidator(1000)], null=True, blank=True)
     referrer = models.URLField(null=True, blank=True)
     # Статистика
     shows = models.PositiveIntegerField(_(u"Показов"), blank=True, default=0)
@@ -382,14 +384,19 @@ class BannerShow(models.Model):
         verbose_name_plural = _(u"Показы баннеров")
         #ordering = ["name"]
 
+    def agent(self):
+        return self.user_agent[:60]
+
+    agent.short_description = _(u'User Gent')
+
     def client(self):
-        if self.user_mac is not None:
+        if self.user_mac is not None and self.user_mac != 'False':
             return u'{0}'.format(self.user_mac)
         elif self.ses is not None:
             return u'{0}'.format(self.ses)
         return u'no Name'
 
-    client.short_description = _(u'Размеры')
+    client.short_description = _(u'Клиент')
     #client.allow_tags = True
 
     #class Client(models.Model):
