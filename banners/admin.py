@@ -144,7 +144,7 @@ class BannerShowAdmin(admin.ModelAdmin):
     #        'fields': ('begin_date', 'end_date')
     #    })
     #)
-    list_display = ('client', 'ip', 'campaign', 'banner', 'zone', 'datetime', 'audits')
+    list_display = ('client', 'ip', 'campaign', 'banner', 'zone', 'shows', 'datetime', 'audits')
     list_per_page = 30
     list_filter = ('audits',)
     date_hierarchy = 'datetime'
@@ -163,7 +163,7 @@ class BannerClickAdmin(admin.ModelAdmin):
     #        'fields': ('begin_date', 'end_date')
     #    })
     #)
-    list_display = ('ip', 'campaign', 'banner', 'zone', 'datetime', 'audits')
+    list_display = ('ip', 'campaign', 'banner', 'zone', 'clicks', 'datetime', 'audits')
     list_per_page = 30
     list_filter = ('audits',)
     date_hierarchy = 'datetime'

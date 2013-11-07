@@ -49,13 +49,16 @@ def clicks(request, banner_id, zone_id, ses):
     if not click_banner:
         if clien_type == 'mac':
             res = BannerClick.objects.filter(banner_id=banner_id, zone_id=zone_id,
-                                             user_mac=user_key).update(shows=F('clicks') + 1)
+                                             user_mac=user_key).update(clicks=F('clicks') + 1)
         else:
             res = BannerClick.objects.filter(banner_id=banner_id, zone_id=zone_id,
-                                             ses=user_key).update(shows=F('clicks') + 1)
-        if res.count() > 0:
-            s = res
-        else:
+                                             ses=user_key).update(clicks=F('clicks') + 1)
+        try:
+            if res.count() > 0:
+                s = res
+            else:
+                s = b.click(request, zone_id, audits)
+        except Exception:
             s = b.click(request, zone_id, audits)
         click_banner = b.foreign_url
         cache.set("banner:click:{0}:{1}:{2}".format(banner_id, zone_id, user_key), click_banner, bset.BANNER_CACHE_TIME_VIEW)
@@ -96,9 +99,12 @@ def shows(request, banner_id, zone_id, ses, user_mac=None):
         else:
             res = BannerShow.objects.filter(banner_id=banner_id, zone_id=zone_id,
                                             ses=user_key).update(shows=F('shows') + 1)
-        if res.count() > 0:
-            s = res
-        else:
+        try:
+            if res.count() > 0:
+                s = res
+            else:
+                s = b.show(request, zone_id, audits)
+        except Exception:
             # зачисляем только уникальные просмотры
             s = b.show(request, zone_id, audits)
         cache.set("banner:show:{0}:{1}:{2}".format(banner_id, zone_id, user_key), s, bset.BANNER_CACHE_TIME_VIEW)
