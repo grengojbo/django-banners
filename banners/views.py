@@ -36,6 +36,10 @@ def clicks(request, banner_id, zone_id, ses):
     if request.session.session_key:
         logger.debug(u'request session: {0}'.format(request.session.session_key))
         user_key = request.session.session_key
+    if ses == 'no':
+        audits = 2
+    else:
+        audits = 1
     cur_banner = cache.get("banner:show:{0}:{1}:{2}".format(banner_id, zone_id, user_key))
     b = get_object_or_404(Banner, id=banner_id, is_active=True)
     if not cur_banner:
@@ -44,13 +48,15 @@ def clicks(request, banner_id, zone_id, ses):
     click_banner = cache.get("banner:click:{0}:{1}:{2}".format(banner_id, zone_id, user_key))
     if not click_banner:
         if clien_type == 'mac':
-            res = BannerClick.objects.filter(banner_id=banner_id, zone_id=zone_id, user_mac=user_key)
+            res = BannerClick.objects.filter(banner_id=banner_id, zone_id=zone_id,
+                                             user_mac=user_key).update(shows=F('clicks') + 1)
         else:
-            res = BannerClick.objects.filter(banner_id=banner_id, zone_id=zone_id, ses=user_key)
+            res = BannerClick.objects.filter(banner_id=banner_id, zone_id=zone_id,
+                                             ses=user_key).update(shows=F('clicks') + 1)
         if res.count() > 0:
             s = res
         else:
-            s = b.click(request, zone_id)
+            s = b.click(request, zone_id, audits)
         click_banner = b.foreign_url
         cache.set("banner:click:{0}:{1}:{2}".format(banner_id, zone_id, user_key), click_banner, bset.BANNER_CACHE_TIME_VIEW)
         logger.debug('click: {0}'.format(s))
@@ -72,6 +78,10 @@ def shows(request, banner_id, zone_id, ses, user_mac=None):
         logger.debug(u'request session: {0}'.format(request.session.session_key))
         user_key = request.session.session_key
         btype = request.session['banner_type']
+    if ses == 'no':
+        audits = 2
+    else:
+        audits = 1
     cur_banner = cache.get("banner:show:{0}:{1}:{2}".format(banner_id, zone_id, user_key))
     src_url = cache.get("hbanner:{0}:{1}".format(banner_id, btype))
     b = get_object_or_404(Banner, id=banner_id, is_active=True)
@@ -81,14 +91,16 @@ def shows(request, banner_id, zone_id, ses, user_mac=None):
                                                             kwargs={'banner_id': b.id, 'zone_id': zone_id, 'ses': ses}))
     if not cur_banner:
         if clien_type == 'mac':
-            res = BannerShow.objects.filter(banner_id=banner_id, zone_id=zone_id, user_mac=user_key)
+            res = BannerShow.objects.filter(banner_id=banner_id, zone_id=zone_id,
+                                            user_mac=user_key).update(shows=F('shows') + 1)
         else:
-            res = BannerShow.objects.filter(banner_id=banner_id, zone_id=zone_id, ses=user_key)
+            res = BannerShow.objects.filter(banner_id=banner_id, zone_id=zone_id,
+                                            ses=user_key).update(shows=F('shows') + 1)
         if res.count() > 0:
             s = res
         else:
             # зачисляем только уникальные просмотры
-            s = b.show(request, zone_id)
+            s = b.show(request, zone_id, audits)
         cache.set("banner:show:{0}:{1}:{2}".format(banner_id, zone_id, user_key), s, bset.BANNER_CACHE_TIME_VIEW)
         logger.debug('show: {0}'.format(s))
     #p = get_object_or_404(Placement, id=zone_id)

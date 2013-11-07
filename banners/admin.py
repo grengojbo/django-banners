@@ -81,7 +81,7 @@ class BannerAdmin(admin.ModelAdmin):
             'fields': ('var', 'priority')
         })
     )
-    inlines = [InlineBannerAdmin]
+
     list_display = ("name", "banner_type", "size", 'priority', 'is_active')
     list_per_page = 30
     list_filter = ('is_active',)
@@ -111,7 +111,7 @@ class PlacementAdmin(admin.ModelAdmin):
         })
     )
     #search_fields = ("banner__name",)
-    #inlines = [InlineBannerAdmin]
+    inlines = [InlineBannerAdmin]
     list_display = ('name', "author", "get_zones", "frequency", "clicks", "max_clicks", "shows", "max_shows",
                     "begin_date", "end_date", "get_status", 'is_active', 'created_at')
     list_filter = ('is_active',)
@@ -132,7 +132,8 @@ class PlacementAdmin(admin.ModelAdmin):
 
 
 class BannerShowAdmin(admin.ModelAdmin):
-    readonly_fields = ('ses', 'user_mac', 'campaign', 'banner', 'zone', 'ip', 'referrer')
+    readonly_fields = ('ses', 'user_mac', 'campaign', 'banner', 'zone', 'ip', 'shows', 'referrer', 'audits',
+                       'datetime', 'user_agent')
     #fieldsets = (
     #    (None, {
     #        'classes': ('wide',),
@@ -143,12 +144,15 @@ class BannerShowAdmin(admin.ModelAdmin):
     #        'fields': ('begin_date', 'end_date')
     #    })
     #)
-    list_display = ('client', 'ip', 'campaign', 'banner', 'zone', 'datetime')
+    list_display = ('client', 'ip', 'campaign', 'banner', 'zone', 'datetime', 'audits')
     list_per_page = 30
+    list_filter = ('audits',)
+    date_hierarchy = 'datetime'
 
 
 class BannerClickAdmin(admin.ModelAdmin):
-    readonly_fields = ('ses', 'user_mac', 'campaign', 'banner', 'zone', 'ip', 'referrer')
+    readonly_fields = ('ses', 'user_mac', 'campaign', 'banner', 'zone', 'ip', 'clicks', 'referrer', 'audits',
+                       'datetime', 'user_agent')
     #fieldsets = (
     #    (None, {
     #        'classes': ('wide',),
@@ -159,8 +163,10 @@ class BannerClickAdmin(admin.ModelAdmin):
     #        'fields': ('begin_date', 'end_date')
     #    })
     #)
-    list_display = ('ip', 'campaign', 'banner', 'zone', 'datetime')
+    list_display = ('ip', 'campaign', 'banner', 'zone', 'datetime', 'audits')
     list_per_page = 30
+    list_filter = ('audits',)
+    date_hierarchy = 'datetime'
 
 
 admin.site.register(BannerShow, BannerShowAdmin)

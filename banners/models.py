@@ -26,6 +26,13 @@ BANNER_CODE = (
     (2, _(u'WiFi Form javascript')),
     (3, _(u'Django Template')),
 )
+BANNER_AUDIT = (
+    (0, _(u'Проверен')),
+    (1, _(u'Непроверен')),
+    (2, _(u'Нет сессии')),
+    (3, _(u'Накрутка')),
+    (4, _(u'Ошибка')),
+)
 BANNER_TYPES = (
     ('g', _(u'графический баннер')),
     ('f', _(u'Flash-баннер')),
@@ -274,7 +281,7 @@ class Banner(models.Model):
     def height(self):
         return self.size.height
 
-    def click(self, request, zone_id, ungine=True):
+    def click(self, request, zone_id, audits, ungine=True):
         click = {
             'banner': self,
             'zone_id': zone_id,
@@ -282,6 +289,7 @@ class Banner(models.Model):
             'ip': request.META.get('REMOTE_ADDR'),
             'user_agent': request.META.get('HTTP_USER_AGENT'),
             'referrer': request.META.get('HTTP_REFERER'),
+            'audits': audits,
         }
 
         if request.session:
@@ -292,10 +300,11 @@ class Banner(models.Model):
         logger.debug('Create Banner Click: {0}'.format(click))
         res = BannerClick.objects.create(**click)
 
-        Placement.objects.filter(pk=res.campaign_id).update(clicks=models.F('clicks') + 1)
+        if audits < 2:
+            Placement.objects.filter(pk=res.campaign_id).update(clicks=models.F('clicks') + 1)
         return res
 
-    def show(self, request, zone_id, ungine=True):
+    def show(self, request, zone_id, audits, ungine=True):
         show = {
             'banner': self,
             'zone_id': zone_id,
@@ -303,6 +312,7 @@ class Banner(models.Model):
             'ip': request.META.get('REMOTE_ADDR'),
             'user_agent': request.META.get('HTTP_USER_AGENT'),
             'referrer': request.META.get('HTTP_REFERER'),
+            'audits': audits,
         }
 
         if request.session:
@@ -314,9 +324,7 @@ class Banner(models.Model):
         #    click['user'] = request.user
         logger.debug('Create Banner Views: {0}'.format(show))
         res = BannerShow.objects.create(**show)
-        if ungine:
-            Placement.objects.filter(pk=res.campaign_id).update(shows=models.F('shows') + 1)
-        else:
+        if ungine and audits < 2:
             Placement.objects.filter(pk=res.campaign_id).update(shows=models.F('shows') + 1)
         return res
 
@@ -347,6 +355,7 @@ class BannerClick(models.Model):
     #foreign_url = models.CharField(max_length=200, blank=True, verbose_name=_(u"URL перехода"), default="")
     # Статистика
     clicks = models.PositiveIntegerField(_(u"Кликов"), blank=True, default=0)
+    audits = models.PositiveSmallIntegerField(verbose_name=_(u"Проверка"), choices=BANNER_AUDIT, default=1)
 
     class Meta(object):
         verbose_name = _(u"Переходы по баннеру")
@@ -366,6 +375,7 @@ class BannerShow(models.Model):
     referrer = models.URLField(null=True, blank=True)
     # Статистика
     shows = models.PositiveIntegerField(_(u"Показов"), blank=True, default=0)
+    audits = models.PositiveSmallIntegerField(verbose_name=_(u"Проверка"), choices=BANNER_AUDIT, default=1)
 
     class Meta(object):
         verbose_name = _(u"Показы баннера")
