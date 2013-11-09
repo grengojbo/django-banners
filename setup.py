@@ -6,9 +6,9 @@ version = __import__('banners').__version__
 
 if sys.argv[-1] == 'publish':  # upload to pypi
     os.system("python setup.py register sdist upload")
-    print "You probably want to also tag the version now:"
-    print "  git tag -a %s -m 'version %s'" % (version, version)
-    print "  git push --tags"
+    print("You probably want to also tag the version now:")
+    print("  git tag -a %s -m 'version %s'" % (version, version))
+    print("  git push --tags")
     sys.exit()
 
 setup(
@@ -17,10 +17,7 @@ setup(
     license='Apache License, Version 2.0',
 
     install_requires=[
-        'Pillow==2.0.0',
-        'django-mptt==0.5.5',
-        'django-compressor==1.3',
-        'djangorestframework==2.2.6'
+        'Pillow'
     ],
 
     description='Banner rotation and managment system for Django Framework',

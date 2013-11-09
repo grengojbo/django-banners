@@ -9,7 +9,11 @@ from django.contrib.auth.models import User
 from django.db.models.signals import post_save, post_delete, pre_delete
 from django.dispatch import receiver
 from django.core.validators import MaxLengthValidator
-from imagestore.models import Album
+try:
+    from imagestore.models import Album
+except Exception:
+    from core.models import Album
+
 
 try:
     from hashlib import md5
