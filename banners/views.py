@@ -80,7 +80,8 @@ def shows(request, banner_id, zone_id, ses, user_mac=None):
     if request.session.session_key:
         logger.debug(u'request session: {0}'.format(request.session.session_key))
         user_key = request.session.session_key
-        btype = request.session['banner_type']
+        if 'banner_type' in request.session:
+            btype = request.session['banner_type']
     if ses == 'no':
         audits = 2
     else:
