@@ -110,6 +110,7 @@ class PlacementAdmin(admin.ModelAdmin):
             'fields': ('begin_date', 'end_date')
         })
     )
+    readonly_fields = ('clicks', 'clicks')
     #search_fields = ("banner__name",)
     inlines = [InlineBannerAdmin]
     list_display = ('name', "author", "get_zones", "frequency", "clicks", "max_clicks", "shows", "max_shows",

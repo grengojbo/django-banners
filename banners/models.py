@@ -202,6 +202,7 @@ class Placement(models.Model):
     unique_session = models.BooleanField(_(u'Уникальный пользователь'), default=True, help_text=_(u'Считать  уникальных пользователей по сессии'))
     client = models.ForeignKey(User, verbose_name=_(u'Клиент'), default=1, related_name='client')
     one_banner_per_page = models.BooleanField(default=True, blank=True, verbose_name=u"Показывать только один баннер этого рекламодателя на странице")
+    # 00,01,02,03,04,05,06,07,08,09,10,11,12,13,14,15,16,17,18,19,20,21,22,23
 
     class Meta(object):
         verbose_name = _(u"размещение")
