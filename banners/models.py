@@ -9,6 +9,7 @@ from django.contrib.auth.models import User
 from django.db.models.signals import post_save, post_delete, pre_delete
 from django.dispatch import receiver
 from django.core.validators import MaxLengthValidator
+from decimal import Decimal
 try:
     from imagestore.models import Album
 except Exception:
@@ -222,6 +223,10 @@ class Placement(models.Model):
         self.shows = models.F('shows') + 1
         self.save()
         return ''
+
+    @property
+    def ctr(self):
+        return u"{0:.2f}".format(Decimal(self.clicks) / Decimal(self.shows))
 
     def get_status(self):
         # Не активен
