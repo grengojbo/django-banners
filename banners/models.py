@@ -31,8 +31,8 @@ BANNER_CODE = (
     (3, _(u'Django Template')),
 )
 BANNER_AUDIT = (
-    (0, _(u'Проверен')),
-    (1, _(u'Непроверен')),
+    (0, _(u'Непроверен')),
+    (1, _(u'Проверен')),
     (2, _(u'Нет сессии')),
     (3, _(u'Накрутка')),
     (4, _(u'Ошибка')),
@@ -198,11 +198,20 @@ class Placement(models.Model):
     priority = models.PositiveSmallIntegerField(verbose_name=u"Приоритет", choices=PRIORITY, default=0)
     is_active = models.BooleanField(_(u'Is active'), default=True)
     created_at = models.DateTimeField(_(u'Create at'), auto_now_add=True, blank=True, null=True)
-    unique_mac = models.BooleanField(_(u'Уникальный MAC адресс'), default=False, help_text=_(u'Считать только пользователей с уникальным МАС адресом'))
-    unique_session = models.BooleanField(_(u'Уникальный пользователь'), default=True, help_text=_(u'Считать  уникальных пользователей по сессии'))
+    unique_mac = models.BooleanField(_(u'Уникальный MAC адресс'), default=False,
+                                     help_text=_(u'Считать только пользователей с уникальным МАС адресом'))
+    unique_session = models.BooleanField(_(u'Уникальный пользователь'), default=True,
+                                         help_text=_(u'Считать  уникальных пользователей по сессии'))
     client = models.ForeignKey(User, verbose_name=_(u'Клиент'), default=1, related_name='client')
-    one_banner_per_page = models.BooleanField(default=True, blank=True, verbose_name=u"Показывать только один баннер этого рекламодателя на странице")
-    # 00,01,02,03,04,05,06,07,08,09,10,11,12,13,14,15,16,17,18,19,20,21,22,23
+    one_banner_per_page = models.BooleanField(default=True, blank=True,
+                                              verbose_name=u"Показывать только один баннер этого рекламодателя на странице.")
+    # 0 понедельник, 6-воскресенье dt.datetime.today().weekday() dt.datetime.today().hour
+    lim_weekday = models.CharField(_(u'Ограничение по часам'), default='0, 1, 2, 3, 4, 5, 6', blank=False, null=False,
+                                help_text=_(u'0 понедельник, 6-воскресенье'), max_length=19)
+    #dt.datetime.today().hour
+    lim_hour = models.CharField(_(u'Ограничение по часам'), blank=False, null=False,
+                                default='0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23',
+                                help_text=_(u'0 понедельник, 6-воскресенье'), max_length=84)
 
     class Meta(object):
         verbose_name = _(u"размещение")
@@ -348,21 +357,26 @@ class Banner(models.Model):
 
 
 class BannerClick(models.Model):
-    banner = models.ForeignKey(Banner, related_name="clicks")
-    zone = models.ForeignKey(Zone, blank=True, null=True, related_name="banner_clicks")
+    banner = models.ForeignKey(Banner, verbose_name=_(u"баннер"), related_name="clicks")
+    zone = models.ForeignKey(Zone, verbose_name=_(u'Где показан'), blank=True, null=True, related_name="banner_clicks")
     #user = models.ForeignKey(User, null=True, blank=True, related_name="banner_clicks")
     ses = models.CharField(_(u'Сессия'), blank=True, null=True, max_length=32)
     user_mac = models.CharField(_(u'MAC адресс'), blank=True, null=True, max_length=17)
-    campaign = models.ForeignKey(Placement, verbose_name=u"Кампания", blank=True, null=True,
+    campaign = models.ForeignKey(Placement, verbose_name=_(u"Кампания"), blank=True, null=True,
                                  related_name='banner_clicks')
     datetime = models.DateTimeField(u"Clicked at", auto_now_add=True)
-    ip = models.IPAddressField(null=True, blank=True)
+    ip = models.IPAddressField(_(u'IP адресс'), null=True, blank=True)
     user_agent = models.TextField(validators=[MaxLengthValidator(1000)], null=True, blank=True)
     referrer = models.URLField(null=True, blank=True)
     #foreign_url = models.CharField(max_length=200, blank=True, verbose_name=_(u"URL перехода"), default="")
     # Статистика
     clicks = models.PositiveIntegerField(_(u"Кликов"), blank=True, default=0)
     audits = models.PositiveSmallIntegerField(verbose_name=_(u"Проверка"), choices=BANNER_AUDIT, default=1)
+    ua_browser_family = models.CharField(verbose_name=_(u"Броузер"), max_length=20, blank=True, null=True)
+    ua_browser_version = models.CharField(verbose_name=_(u"Версия броузера"), max_length=10, blank=True, null=True)
+    ua_os_family = models.CharField(verbose_name=_(u"Операционная система"), max_length=20, blank=True, null=True)
+    ua_os_version = models.CharField(verbose_name=_(u"Версия OS"), max_length=10, blank=True, null=True)
+    ua_device_family = models.CharField(verbose_name=_(u"Тип Устройства"), max_length=20, blank=True, null=True)
 
     class Meta(object):
         verbose_name = _(u"Переходы по баннеру")
@@ -370,19 +384,24 @@ class BannerClick(models.Model):
 
 
 class BannerShow(models.Model):
-    banner = models.ForeignKey(Banner)
+    banner = models.ForeignKey(Banner, verbose_name=_(u"баннер"))
     #user = models.ForeignKey(User, null=True, blank=True, related_name="banner_show")
-    zone = models.ForeignKey(Zone, blank=True, null=True)
+    zone = models.ForeignKey(Zone, verbose_name=_(u'Где показан'), blank=True, null=True)
     ses = models.CharField(_(u'Сессия'), blank=True, null=True, max_length=32)
     user_mac = models.CharField(_(u'MAC адресс'), blank=True, null=True, max_length=17)
     campaign = models.ForeignKey(Placement, verbose_name=u"Кампания", blank=True, null=True)
-    datetime = models.DateTimeField(_(u"Show at"), auto_now_add=True)
-    ip = models.IPAddressField(null=True, blank=True)
-    user_agent = models.TextField(_(u'User Gent'), validators=[MaxLengthValidator(1000)], null=True, blank=True)
+    datetime = models.DateTimeField(_(u'время показа'), auto_now_add=True)
+    ip = models.IPAddressField(_(u'IP адресс'), null=True, blank=True)
+    user_agent = models.TextField(_(u'User agent'), validators=[MaxLengthValidator(1000)], null=True, blank=True)
     referrer = models.URLField(null=True, blank=True)
     # Статистика
     shows = models.PositiveIntegerField(_(u"Показов"), blank=True, default=0)
     audits = models.PositiveSmallIntegerField(verbose_name=_(u"Проверка"), choices=BANNER_AUDIT, default=1)
+    ua_browser_family = models.CharField(verbose_name=_(u"Броузер"), max_length=20, blank=True, null=True)
+    ua_browser_version = models.CharField(verbose_name=_(u"Версия броузера"), max_length=10, blank=True, null=True)
+    ua_os_family = models.CharField(verbose_name=_(u"Операционная система"), max_length=20, blank=True, null=True)
+    ua_os_version = models.CharField(verbose_name=_(u"Версия OS"), max_length=10, blank=True, null=True)
+    ua_device_family = models.CharField(verbose_name=_(u"Тип Устройства"), max_length=20, blank=True, null=True)
 
     class Meta(object):
         verbose_name = _(u"Показы баннера")
