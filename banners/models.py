@@ -226,7 +226,11 @@ class Placement(models.Model):
 
     @property
     def ctr(self):
-        return u"{0:.2f}".format(Decimal(self.clicks) / Decimal(self.shows))
+        try:
+            return u"{0:.2f}".format(Decimal(self.clicks) / Decimal(self.shows))
+        except:
+            #decimal.InvalidOperation
+            return u"0"
 
     def get_status(self):
         # Не активен
