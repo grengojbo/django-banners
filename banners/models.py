@@ -206,13 +206,19 @@ class Placement(models.Model):
     client = models.ForeignKey(User, verbose_name=_(u'Клиент'), default=1, related_name='client')
     one_banner_per_page = models.BooleanField(default=True, blank=True,
                                               verbose_name=u"Показывать только один баннер этого рекламодателя на странице.")
+
     # 0 понедельник, 6-воскресенье dt.datetime.today().weekday() dt.datetime.today().hour
     lim_weekday = models.CharField(_(u'Ограничение по часам'), default='0, 1, 2, 3, 4, 5, 6', blank=False, null=False,
-                                help_text=_(u'0 понедельник, 6-воскресенье'), max_length=19)
+                                   help_text=_(u'0 понедельник, 6-воскресенье'), max_length=19)
     #dt.datetime.today().hour
     lim_hour = models.CharField(_(u'Ограничение по часам'), blank=False, null=False,
                                 default='0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23',
                                 help_text=_(u'0 понедельник, 6-воскресенье'), max_length=84)
+    lim_day = models.PositiveSmallIntegerField(_(u'Показов в день'), blank=False, null=False, default=0,
+                                               help_text=_(u'Показывать в сутки неболее.'))
+    view_day = models.PositiveSmallIntegerField(_(u'Показано сегодня'), blank=False, null=False, default=0)
+    lim_unique = models.PositiveSmallIntegerField(_(u'Показывать одному пользователю'), blank=False, null=False,
+                                                  default=0, help_text=_(u'Показывать уникальному пользователю неболее.'))
 
     class Meta(object):
         verbose_name = _(u"размещение")
