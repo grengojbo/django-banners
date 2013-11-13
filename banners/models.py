@@ -227,7 +227,7 @@ class Placement(models.Model):
     @property
     def ctr(self):
         try:
-            return u"{0:.2f}".format(Decimal(self.clicks) / Decimal(self.shows))
+            return u"{0:.2f}".format((Decimal(self.clicks) / Decimal(self.shows)) * 100)
         except:
             #decimal.InvalidOperation
             return u"0"
